@@ -1,0 +1,58 @@
+name: Test match-directories option
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action-with-dirs
+        uses: .
+        with:
+          files: |
+            tests/**
+          match-directories: "true"
+          separator: "\n"
+          read-gitignore: "false"
+
+      - id: action-without-dirs
+        uses: .
+        with:
+          files: |
+            tests/**
+          match-directories: "false"
+          separator: "\n"
+          read-gitignore: "false"
+
+      - name: Assert match-directories=true includes directories
+        env:
+          PATHS_WITH: ${{ steps.action-with-dirs.outputs.paths }}
+          PATHS_WITHOUT: ${{ steps.action-without-dirs.outputs.paths }}
+        run: |
+          echo "=== paths with directories ==="
+          echo "$PATHS_WITH"
+          echo "=== paths without directories ==="
+          echo "$PATHS_WITHOUT"
+
+          if [ -z "$PATHS_WITH" ]; then
+            echo "FAIL: expected paths with directories to be non-empty"
+            exit 1
+          fi
+          if [ -z "$PATHS_WITHOUT" ]; then
+            echo "FAIL: expected paths without directories to be non-empty (files still exist)"
+            exit 1
+          fi
+
+          # Count lines in each output
+          COUNT_WITH=$(echo "$PATHS_WITH" | wc -l | tr -d ' ')
+          COUNT_WITHOUT=$(echo "$PATHS_WITHOUT" | wc -l | tr -d ' ')
+          echo "count with dirs: $COUNT_WITH"
+          echo "count without dirs: $COUNT_WITHOUT"
+
+          # With directories should have more or equal entries than without
+          if [ "$COUNT_WITH" -lt "$COUNT_WITHOUT" ]; then
+            echo "FAIL: expected match-directories=true to have >= entries than match-directories=false"
+            exit 1
+          fi
+          echo "PASS"

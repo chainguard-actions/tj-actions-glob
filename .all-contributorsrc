@@ -1,0 +1,35 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "mmkal",
+      "name": "Misha Kaletsky",
+      "avatar_url": "https://avatars.githubusercontent.com/u/15040698?v=4",
+      "profile": "https://github.com/mmkal",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "boidolr",
+      "name": "Raphael Boidol",
+      "avatar_url": "https://avatars.githubusercontent.com/u/652404?v=4",
+      "profile": "https://home.boidol.dev/",
+      "contributions": [
+        "doc"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "glob",
+  "projectOwner": "tj-actions"
+}

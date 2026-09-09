@@ -1,0 +1,41 @@
+name: Test safe-output option
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action-safe
+        uses: .
+        with:
+          files: |
+            tests/*.yml
+          safe-output: "true"
+          read-gitignore: "false"
+
+      - id: action-unsafe
+        uses: .
+        with:
+          files: |
+            tests/*.yml
+          safe-output: "false"
+          read-gitignore: "false"
+
+      - name: Assert both safe and unsafe outputs are non-empty
+        env:
+          PATHS_SAFE: ${{ steps.action-safe.outputs.paths }}
+          PATHS_UNSAFE: ${{ steps.action-unsafe.outputs.paths }}
+        run: |
+          echo "safe paths: $PATHS_SAFE"
+          echo "unsafe paths: $PATHS_UNSAFE"
+          if [ -z "$PATHS_SAFE" ]; then
+            echo "FAIL: expected safe paths output to be non-empty"
+            exit 1
+          fi
+          if [ -z "$PATHS_UNSAFE" ]; then
+            echo "FAIL: expected unsafe paths output to be non-empty"
+            exit 1
+          fi
+          echo "PASS: both safe and unsafe outputs are non-empty"

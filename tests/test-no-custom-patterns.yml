@@ -1,0 +1,27 @@
+name: Test glob with no custom patterns
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          read-gitignore: "false"
+        # No files input provided - no custom patterns
+
+      - name: Assert has-custom-patterns is false when no files input given
+        env:
+          HAS_CUSTOM: ${{ steps.action.outputs.has-custom-patterns }}
+          PATHS: ${{ steps.action.outputs.paths }}
+        run: |
+          echo "has-custom-patterns: $HAS_CUSTOM"
+          echo "paths: '$PATHS'"
+          if [ "$HAS_CUSTOM" != "false" ]; then
+            echo "FAIL: expected has-custom-patterns to be 'false' when no files input provided, got '$HAS_CUSTOM'"
+            exit 1
+          fi
+          echo "PASS: has-custom-patterns is false as expected"

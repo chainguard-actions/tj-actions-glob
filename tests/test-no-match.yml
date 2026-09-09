@@ -1,0 +1,32 @@
+name: Test glob with no matching files
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          files: |
+            **/*.nonexistentextension12345
+          read-gitignore: "false"
+
+      - name: Assert paths output is empty and has-custom-patterns is true
+        env:
+          PATHS: ${{ steps.action.outputs.paths }}
+          HAS_CUSTOM: ${{ steps.action.outputs.has-custom-patterns }}
+        run: |
+          echo "paths: '$PATHS'"
+          echo "has-custom-patterns: $HAS_CUSTOM"
+          if [ -n "$PATHS" ]; then
+            echo "FAIL: expected paths output to be empty for non-matching pattern, got: $PATHS"
+            exit 1
+          fi
+          if [ "$HAS_CUSTOM" != "true" ]; then
+            echo "FAIL: expected has-custom-patterns to be 'true' even when no files match, got '$HAS_CUSTOM'"
+            exit 1
+          fi
+          echo "PASS"

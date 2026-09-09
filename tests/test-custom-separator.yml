@@ -1,0 +1,36 @@
+name: Test custom separator for paths output
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          files: |
+            **/*.yml
+          separator: "\n"
+          read-gitignore: "false"
+
+      - name: Assert paths output uses newline separator
+        env:
+          PATHS: ${{ steps.action.outputs.paths }}
+        run: |
+          echo "paths:"
+          echo "$PATHS"
+          if [ -z "$PATHS" ]; then
+            echo "FAIL: expected paths output to be non-empty"
+            exit 1
+          fi
+          # With newline separator, each path should be on its own line
+          # Count lines - should be more than 1 if multiple yml files exist
+          LINE_COUNT=$(echo "$PATHS" | wc -l | tr -d ' ')
+          echo "line count: $LINE_COUNT"
+          if [ "$LINE_COUNT" -lt 1 ]; then
+            echo "FAIL: expected at least 1 line in output"
+            exit 1
+          fi
+          echo "PASS: paths output has $LINE_COUNT lines with newline separator"

@@ -1,0 +1,38 @@
+name: Test files-from-source-file input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create source file with glob patterns in workspace
+        run: |
+          # The files-from-source-file input is joined with GITHUB_WORKSPACE,
+          # so the path must be relative to GITHUB_WORKSPACE
+          echo "tests/*.yml" > "$GITHUB_WORKSPACE/glob-patterns.txt"
+          cat "$GITHUB_WORKSPACE/glob-patterns.txt"
+
+      - id: action
+        uses: .
+        with:
+          files-from-source-file: glob-patterns.txt
+          read-gitignore: "false"
+
+      - name: Assert paths output is non-empty when using source file
+        env:
+          PATHS: ${{ steps.action.outputs.paths }}
+          HAS_CUSTOM: ${{ steps.action.outputs.has-custom-patterns }}
+        run: |
+          echo "paths: $PATHS"
+          echo "has-custom-patterns: $HAS_CUSTOM"
+          if [ -z "$PATHS" ]; then
+            echo "FAIL: expected paths output to be non-empty when using files-from-source-file"
+            exit 1
+          fi
+          if [ "$HAS_CUSTOM" != "true" ]; then
+            echo "FAIL: expected has-custom-patterns to be 'true', got '$HAS_CUSTOM'"
+            exit 1
+          fi
+          echo "PASS"

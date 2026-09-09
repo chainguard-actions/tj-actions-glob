@@ -1,0 +1,33 @@
+name: Test excluded files glob matching
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          files: |
+            tests/*.yml
+          excluded-files: |
+            tests/test-no-match.yml
+          read-gitignore: "false"
+
+      - name: Assert paths output is non-empty and excluded file is absent
+        env:
+          PATHS: ${{ steps.action.outputs.paths }}
+        run: |
+          echo "paths: $PATHS"
+          if [ -z "$PATHS" ]; then
+            echo "FAIL: expected paths output to be non-empty"
+            exit 1
+          fi
+          # The excluded file should not appear in the output
+          if echo "$PATHS" | grep -q "test-no-match.yml"; then
+            echo "FAIL: excluded file 'tests/test-no-match.yml' found in paths output"
+            exit 1
+          fi
+          echo "PASS: excluded file is not in output"

@@ -1,0 +1,51 @@
+name: Test diff input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Get current and parent SHAs
+        id: shas
+        run: |
+          CURRENT_SHA=$(git rev-parse HEAD)
+          PARENT_SHA=$(git rev-parse HEAD~1 2>/dev/null || echo "$CURRENT_SHA")
+          echo "current=$CURRENT_SHA" >> "$GITHUB_OUTPUT"
+          echo "parent=$PARENT_SHA" >> "$GITHUB_OUTPUT"
+
+      - id: action
+        uses: .
+        with:
+          files: "**/*.yml"
+          include-deleted-files: "true"
+          sha: ${{ steps.shas.outputs.current }}
+          base-sha: ${{ steps.shas.outputs.parent }}
+          diff: "..."
+
+      - name: Assert has-custom-patterns is true
+        env:
+          HAS_PATTERNS: ${{ steps.action.outputs.has-custom-patterns }}
+        run: |
+          echo "has-custom-patterns: $HAS_PATTERNS"
+          if [ "$HAS_PATTERNS" != "true" ]; then
+            echo "FAIL: expected has-custom-patterns to be 'true', got '$HAS_PATTERNS'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert paths output is set
+        env:
+          PATHS: ${{ steps.action.outputs.paths }}
+          PATHS_FILE: ${{ steps.action.outputs.paths-output-file }}
+        run: |
+          echo "paths: $PATHS"
+          echo "paths-output-file: $PATHS_FILE"
+          if [ -z "$PATHS" ]; then
+            echo "FAIL: expected paths to be non-empty"
+            exit 1
+          fi
+          echo "PASS"
