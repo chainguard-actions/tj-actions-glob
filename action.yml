@@ -97,7 +97,6 @@ outputs:
     description: "Indicates whether at least one pattern was provided"
 
 runs:
-  pre: chainguard-phonehome.js
   using: 'node20'
   main: 'dist/index.js'
   post: 'dist/cleanup/index.js'

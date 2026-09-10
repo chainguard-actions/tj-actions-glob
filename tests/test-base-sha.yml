@@ -9,21 +9,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get current and parent SHAs
-        id: shas
+      - name: Get current SHA
+        id: get-sha
         run: |
           CURRENT_SHA=$(git rev-parse HEAD)
-          PARENT_SHA=$(git rev-parse HEAD~1 2>/dev/null || echo "$CURRENT_SHA")
-          echo "current=$CURRENT_SHA" >> "$GITHUB_OUTPUT"
-          echo "parent=$PARENT_SHA" >> "$GITHUB_OUTPUT"
+          echo "sha=$CURRENT_SHA" >> "$GITHUB_OUTPUT"
 
       - id: action
         uses: .
         with:
           files: "**/*.yml"
           include-deleted-files: "true"
-          sha: ${{ steps.shas.outputs.current }}
-          base-sha: ${{ steps.shas.outputs.parent }}
+          sha: ${{ steps.get-sha.outputs.sha }}
+          base-sha: ${{ steps.get-sha.outputs.sha }}
+          separator: "\n"
 
       - name: Assert has-custom-patterns is true
         env:
@@ -36,15 +35,13 @@ jobs:
           fi
           echo "PASS"
 
-      - name: Assert paths output is set
+      - name: Assert paths-output-file is set
         env:
-          PATHS: ${{ steps.action.outputs.paths }}
-          PATHS_FILE: ${{ steps.action.outputs.paths-output-file }}
+          OUTPUT_FILE: ${{ steps.action.outputs.paths-output-file }}
         run: |
-          echo "paths: $PATHS"
-          echo "paths-output-file: $PATHS_FILE"
-          if [ -z "$PATHS" ]; then
-            echo "FAIL: expected paths to be non-empty"
+          echo "paths-output-file: $OUTPUT_FILE"
+          if [ -z "$OUTPUT_FILE" ]; then
+            echo "FAIL: expected paths-output-file to be set"
             exit 1
           fi
           echo "PASS"
