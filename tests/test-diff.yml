@@ -1,4 +1,4 @@
-name: Test diff input
+name: Test diff input (include-deleted-files)
 on:
   workflow_dispatch:
 jobs:
@@ -9,21 +9,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get current SHA
-        id: get-sha
+      - name: Get current and base SHAs
+        id: shas
         run: |
           CURRENT_SHA=$(git rev-parse HEAD)
-          echo "sha=$CURRENT_SHA" >> "$GITHUB_OUTPUT"
+          BASE_SHA=$(git rev-parse HEAD~1 2>/dev/null || echo "$CURRENT_SHA")
+          echo "current=$CURRENT_SHA" >> "$GITHUB_OUTPUT"
+          echo "base=$BASE_SHA" >> "$GITHUB_OUTPUT"
 
       - id: action
         uses: .
         with:
           files: "**/*.yml"
           include-deleted-files: "true"
-          sha: ${{ steps.get-sha.outputs.sha }}
-          base-sha: ${{ steps.get-sha.outputs.sha }}
-          diff: "..."
-          separator: "\n"
+          sha: ${{ steps.shas.outputs.current }}
+          base-sha: ${{ steps.shas.outputs.base }}
+          diff: ".."
 
       - name: Assert has-custom-patterns is true
         env:
@@ -42,7 +43,7 @@ jobs:
         run: |
           echo "paths-output-file: $OUTPUT_FILE"
           if [ -z "$OUTPUT_FILE" ]; then
-            echo "FAIL: expected paths-output-file to be set"
+            echo "FAIL: expected paths-output-file to be non-empty"
             exit 1
           fi
           echo "PASS"
